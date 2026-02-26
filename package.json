@@ -1,0 +1,49 @@
+{
+  "name": "n8n-nodes-ozor",
+  "version": "0.1.0",
+  "description": "n8n community node for Ozor AI Video Generation API",
+  "keywords": [
+    "n8n-community-node-package",
+    "n8n",
+    "ozor",
+    "video",
+    "ai"
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/Mintii-Labs/n8n-nodes-ozor",
+  "author": {
+    "name": "Mintii-Labs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Mintii-Labs/n8n-nodes-ozor.git"
+  },
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc && cp nodes/Ozor/ozor.svg dist/nodes/Ozor/ozor.svg",
+    "dev": "tsc --watch",
+    "lint": "eslint . --ext .ts",
+    "lintfix": "eslint . --ext .ts --fix",
+    "prepublishOnly": "npm run build"
+  },
+  "files": [
+    "dist"
+  ],
+  "n8n": {
+    "n8nNodesApiVersion": 1,
+    "credentials": [
+      "dist/credentials/OzorApi.credentials.js"
+    ],
+    "nodes": [
+      "dist/nodes/Ozor/Ozor.node.js"
+    ]
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "n8n-workflow": "^1.0.0",
+    "typescript": "^5.3.0"
+  },
+  "peerDependencies": {
+    "n8n-workflow": "*"
+  }
+}
