@@ -1,12 +1,18 @@
-import {
+import type {
 	IAuthenticateGeneric,
+	ICredentialTestRequest,
 	ICredentialType,
+	Icon,
 	INodeProperties,
 } from 'n8n-workflow';
 
 export class OzorApi implements ICredentialType {
 	name = 'ozorApi';
+
 	displayName = 'Ozor API';
+
+	icon: Icon = 'file:../nodes/Ozor/ozor.svg';
+
 	documentationUrl = 'https://ozor.ai';
 
 	properties: INodeProperties[] = [
@@ -27,6 +33,14 @@ export class OzorApi implements ICredentialType {
 			headers: {
 				'X-API-Key': '={{$credentials.apiKey}}',
 			},
+		},
+	};
+
+	test: ICredentialTestRequest = {
+		request: {
+			baseURL: 'https://ozor.ai/api',
+			url: '/v1/videos',
+			method: 'GET',
 		},
 	};
 }

@@ -1,9 +1,11 @@
 import {
+	ApplicationError,
 	IExecuteFunctions,
 	INodeExecutionData,
 	INodeType,
 	INodeTypeDescription,
 	NodeApiError,
+	sleep,
 } from 'n8n-workflow';
 
 export class Ozor implements INodeType {
@@ -133,7 +135,7 @@ export class Ozor implements INodeType {
 				description: 'Whether to poll and wait until the export is complete before returning',
 			},
 			{
-				displayName: 'Max Poll Time (seconds)',
+				displayName: 'Max Poll Time (Seconds)',
 				name: 'maxPollTime',
 				type: 'number',
 				default: 300,
@@ -152,7 +154,7 @@ export class Ozor implements INodeType {
 				displayName: 'Limit',
 				name: 'limit',
 				type: 'number',
-				default: 20,
+				default: 50,
 				typeOptions: {
 					minValue: 1,
 					maxValue: 100,
@@ -160,7 +162,7 @@ export class Ozor implements INodeType {
 				displayOptions: {
 					show: { operation: ['list'] },
 				},
-				description: 'Number of videos to return (1–100)',
+				description: 'Max number of results to return',
 			},
 
 			// ------ Get Video / Export fields ------
@@ -203,7 +205,7 @@ export class Ozor implements INodeType {
 				description: 'Whether to poll and wait until the export is complete before returning',
 			},
 			{
-				displayName: 'Max Poll Time (seconds)',
+				displayName: 'Max Poll Time (Seconds)',
 				name: 'maxPollTimeSingle',
 				type: 'number',
 				default: 300,
@@ -216,6 +218,7 @@ export class Ozor implements INodeType {
 				description: 'Maximum time in seconds to wait for export completion',
 			},
 		],
+		usableAsTool: true,
 	};
 
 	async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
@@ -227,6 +230,7 @@ export class Ozor implements INodeType {
 		for (let i = 0; i < items.length; i++) {
 			try {
 				const operation = this.getNodeParameter('operation', i) as string;
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				let responseData: any;
 
 				// ===== GENERATE VIDEO =====
@@ -235,7 +239,7 @@ export class Ozor implements INodeType {
 					const aspect = this.getNodeParameter('aspect', i) as string;
 					const autoExport = this.getNodeParameter('export', i) as boolean;
 
-					const body: Record<string, any> = { prompt, aspect, export: autoExport };
+					const body: Record<string, unknown> = { prompt, aspect, export: autoExport };
 
 					if (autoExport) {
 						body.exportQuality = this.getNodeParameter('exportQuality', i) as string;
@@ -337,6 +341,7 @@ export class Ozor implements INodeType {
 					});
 					continue;
 				}
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				throw new NodeApiError(this.getNode(), error as any, { itemIndex: i });
 			}
 		}
@@ -351,6 +356,7 @@ async function pollForExport(
 	apiBase: string,
 	videoId: string,
 	maxPollTimeSeconds: number,
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): Promise<any> {
 	const startTime = Date.now();
 	const POLL_INTERVAL_MS = 5000;
@@ -371,11 +377,15 @@ async function pollForExport(
 		}
 
 		if (status.exportStatus === 'failed') {
-			throw new Error(`Ozor export failed: ${status.exportError || 'Unknown error'}`);
+			throw new ApplicationError(
+				`Ozor export failed: ${status.exportError || 'Unknown error'}`,
+			);
 		}
 
-		await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
+		await sleep(POLL_INTERVAL_MS);
 	}
 
-	throw new Error(`Ozor export timed out after ${maxPollTimeSeconds} seconds`);
+	throw new ApplicationError(
+		`Ozor export timed out after ${maxPollTimeSeconds} seconds`,
+	);
 }

@@ -5,6 +5,7 @@ class OzorApi {
     constructor() {
         this.name = 'ozorApi';
         this.displayName = 'Ozor API';
+        this.icon = 'file:../nodes/Ozor/ozor.svg';
         this.documentationUrl = 'https://ozor.ai';
         this.properties = [
             {
@@ -25,6 +26,14 @@ class OzorApi {
                 },
             },
         };
+        this.test = {
+            request: {
+                baseURL: 'https://ozor.ai/api',
+                url: '/v1/videos',
+                method: 'GET',
+            },
+        };
     }
 }
 exports.OzorApi = OzorApi;
+//# sourceMappingURL=OzorApi.credentials.js.map

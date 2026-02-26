@@ -24,7 +24,6 @@ class Ozor {
                 },
             ],
             properties: [
-                // ------ Operation selector ------
                 {
                     displayName: 'Operation',
                     name: 'operation',
@@ -58,7 +57,6 @@ class Ozor {
                     ],
                     default: 'generate',
                 },
-                // ------ Generate Video fields ------
                 {
                     displayName: 'Prompt',
                     name: 'prompt',
@@ -129,7 +127,7 @@ class Ozor {
                     description: 'Whether to poll and wait until the export is complete before returning',
                 },
                 {
-                    displayName: 'Max Poll Time (seconds)',
+                    displayName: 'Max Poll Time (Seconds)',
                     name: 'maxPollTime',
                     type: 'number',
                     default: 300,
@@ -142,12 +140,11 @@ class Ozor {
                     },
                     description: 'Maximum time in seconds to wait for export completion',
                 },
-                // ------ List Videos fields ------
                 {
                     displayName: 'Limit',
                     name: 'limit',
                     type: 'number',
-                    default: 20,
+                    default: 50,
                     typeOptions: {
                         minValue: 1,
                         maxValue: 100,
@@ -155,9 +152,8 @@ class Ozor {
                     displayOptions: {
                         show: { operation: ['list'] },
                     },
-                    description: 'Number of videos to return (1–100)',
+                    description: 'Max number of results to return',
                 },
-                // ------ Get Video / Export fields ------
                 {
                     displayName: 'Video ID',
                     name: 'videoId',
@@ -169,7 +165,6 @@ class Ozor {
                     },
                     description: 'The unique ID of the video',
                 },
-                // ------ Export Video fields ------
                 {
                     displayName: 'Quality',
                     name: 'quality',
@@ -196,7 +191,7 @@ class Ozor {
                     description: 'Whether to poll and wait until the export is complete before returning',
                 },
                 {
-                    displayName: 'Max Poll Time (seconds)',
+                    displayName: 'Max Poll Time (Seconds)',
                     name: 'maxPollTimeSingle',
                     type: 'number',
                     default: 300,
@@ -209,6 +204,7 @@ class Ozor {
                     description: 'Maximum time in seconds to wait for export completion',
                 },
             ],
+            usableAsTool: true,
         };
     }
     async execute() {
@@ -219,7 +215,6 @@ class Ozor {
             try {
                 const operation = this.getNodeParameter('operation', i);
                 let responseData;
-                // ===== GENERATE VIDEO =====
                 if (operation === 'generate') {
                     const prompt = this.getNodeParameter('prompt', i);
                     const aspect = this.getNodeParameter('aspect', i);
@@ -234,13 +229,11 @@ class Ozor {
                         body,
                         json: true,
                     });
-                    // Optional polling for export completion
                     if (autoExport && this.getNodeParameter('waitForExport', i)) {
                         const maxPollTime = this.getNodeParameter('maxPollTime', i);
                         responseData = await pollForExport.call(this, API_BASE, responseData.videoId, maxPollTime);
                     }
                 }
-                // ===== LIST VIDEOS =====
                 else if (operation === 'list') {
                     const limit = this.getNodeParameter('limit', i);
                     responseData = await this.helpers.httpRequestWithAuthentication.call(this, 'ozorApi', {
@@ -250,7 +243,6 @@ class Ozor {
                         json: true,
                     });
                 }
-                // ===== GET VIDEO DETAILS =====
                 else if (operation === 'get') {
                     const videoId = this.getNodeParameter('videoId', i);
                     responseData = await this.helpers.httpRequestWithAuthentication.call(this, 'ozorApi', {
@@ -259,7 +251,6 @@ class Ozor {
                         json: true,
                     });
                 }
-                // ===== EXPORT VIDEO =====
                 else if (operation === 'export') {
                     const videoId = this.getNodeParameter('videoId', i);
                     const quality = this.getNodeParameter('quality', i);
@@ -269,7 +260,6 @@ class Ozor {
                         body: { quality },
                         json: true,
                     });
-                    // Optional polling for export completion
                     if (this.getNodeParameter('waitForExportSingle', i)) {
                         const maxPollTime = this.getNodeParameter('maxPollTimeSingle', i);
                         responseData = await pollForExport.call(this, API_BASE, videoId, maxPollTime);
@@ -293,7 +283,6 @@ class Ozor {
     }
 }
 exports.Ozor = Ozor;
-// ===== Helper: Poll for export completion =====
 async function pollForExport(apiBase, videoId, maxPollTimeSeconds) {
     const startTime = Date.now();
     const POLL_INTERVAL_MS = 5000;
@@ -307,9 +296,10 @@ async function pollForExport(apiBase, videoId, maxPollTimeSeconds) {
             return status;
         }
         if (status.exportStatus === 'failed') {
-            throw new Error(`Ozor export failed: ${status.exportError || 'Unknown error'}`);
+            throw new n8n_workflow_1.ApplicationError(`Ozor export failed: ${status.exportError || 'Unknown error'}`);
         }
-        await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
+        await (0, n8n_workflow_1.sleep)(POLL_INTERVAL_MS);
     }
-    throw new Error(`Ozor export timed out after ${maxPollTimeSeconds} seconds`);
+    throw new n8n_workflow_1.ApplicationError(`Ozor export timed out after ${maxPollTimeSeconds} seconds`);
 }
+//# sourceMappingURL=Ozor.node.js.map
