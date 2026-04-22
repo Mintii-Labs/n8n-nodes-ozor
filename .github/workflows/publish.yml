@@ -37,3 +37,7 @@ jobs:
         run: npm publish --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          # Bypass @n8n/node-cli's prepublishOnly guard, which blocks direct
+          # `npm publish` unless RELEASE_MODE is set (it's meant to force local
+          # devs through `npm run release`; in CI we handle lint/build ourselves).
+          RELEASE_MODE: 'true'
