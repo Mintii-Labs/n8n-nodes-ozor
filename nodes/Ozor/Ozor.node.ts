@@ -10,9 +10,6 @@ import {
 	NodeConnectionTypes,
 	sleep,
 } from 'n8n-workflow';
-// form-data is a transitive dep shipped with n8n's HTTP stack — no types bundled.
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const FormData = require('form-data');
 
 const API_BASE = 'https://ozor.ai/api';
 const DEFAULT_POLL_SECONDS = 300;
@@ -73,16 +70,22 @@ export class Ozor implements INodeType {
 				displayOptions: { show: { resource: ['video'] } },
 				options: [
 					{
+						name: 'Export Video',
+						value: 'export',
+						description: 'Trigger an MP4 export for an existing video',
+						action: 'Export a video',
+					},
+					{
 						name: 'Generate Video',
 						value: 'generate',
 						description: 'Create a new video from a text prompt',
 						action: 'Generate a video',
 					},
 					{
-						name: 'List Videos',
-						value: 'list',
-						description: 'Retrieve all videos created via the API',
-						action: 'List videos',
+						name: 'Get Job Status',
+						value: 'getJob',
+						description: 'Poll a generate or message job',
+						action: 'Get agent job status',
 					},
 					{
 						name: 'Get Video Details',
@@ -91,22 +94,16 @@ export class Ozor implements INodeType {
 						action: 'Get video details',
 					},
 					{
-						name: 'Export Video',
-						value: 'export',
-						description: 'Trigger an MP4 export for an existing video',
-						action: 'Export a video',
+						name: 'List Videos',
+						value: 'list',
+						description: 'Retrieve all videos created via the API',
+						action: 'List videos',
 					},
 					{
 						name: 'Send Message (Edit)',
 						value: 'message',
 						description: 'Send a natural-language edit instruction to the agent',
 						action: 'Send a message to the agent',
-					},
-					{
-						name: 'Get Job Status',
-						value: 'getJob',
-						description: 'Poll a generate or message job',
-						action: 'Get agent job status',
 					},
 				],
 				default: 'generate',
@@ -123,16 +120,16 @@ export class Ozor implements INodeType {
 				displayOptions: { show: { resource: ['document'] } },
 				options: [
 					{
-						name: 'List Voices',
-						value: 'listVoices',
-						description: 'List available TTS voices',
-						action: 'List TTS voices',
-					},
-					{
 						name: 'Analyze Document',
 						value: 'analyze',
 						description: 'Turn a PDF, PPTX, DOCX, or URL into a scene-by-scene plan',
 						action: 'Analyze a document',
+					},
+					{
+						name: 'Generate From Plan',
+						value: 'generatePlan',
+						description: 'Render a plan into a video (streams SSE progress)',
+						action: 'Generate a video from a plan',
 					},
 					{
 						name: 'Get Plan',
@@ -141,16 +138,16 @@ export class Ozor implements INodeType {
 						action: 'Get an analysis plan',
 					},
 					{
+						name: 'List Voices',
+						value: 'listVoices',
+						description: 'List available TTS voices',
+						action: 'List TTS voices',
+					},
+					{
 						name: 'Update Plan',
 						value: 'updatePlan',
 						description: 'Edit scenes or voice settings before generation',
 						action: 'Update an analysis plan',
-					},
-					{
-						name: 'Generate From Plan',
-						value: 'generatePlan',
-						description: 'Render a plan into a video (streams SSE progress)',
-						action: 'Generate a video from a plan',
 					},
 				],
 				default: 'analyze',
@@ -252,10 +249,10 @@ export class Ozor implements INodeType {
 				displayName: 'Limit',
 				name: 'limit',
 				type: 'number',
-				default: 20,
+				default: 50,
 				typeOptions: { minValue: 1, maxValue: 100 },
 				displayOptions: { show: { resource: ['video'], operation: ['list'] } },
-				description: 'Max number of videos to return (1–100)',
+				description: 'Max number of results to return',
 			},
 
 			// --------------------------------------------------------------------
@@ -507,7 +504,7 @@ export class Ozor implements INodeType {
 						name: 'voiceId',
 						type: 'string',
 						default: '',
-						description: 'A voice id from the List Voices operation. Omit to auto-select by language.',
+						description: 'A voice ID from the List Voices operation. Omit to auto-select by language.',
 					},
 					{
 						displayName: 'Speaking Style',
@@ -803,17 +800,16 @@ async function runDocumentOperation(
 			const binaryPropertyName = this.getNodeParameter('binaryPropertyName', i) as string;
 			const binaryData = this.helpers.assertBinaryData(i, binaryPropertyName);
 			const buffer = await this.helpers.getBinaryDataBuffer(i, binaryPropertyName);
-			form.append('file', buffer, {
-				filename: binaryData.fileName ?? 'upload',
-				contentType: binaryData.mimeType ?? 'application/octet-stream',
+			const blob = new Blob([buffer], {
+				type: binaryData.mimeType ?? 'application/octet-stream',
 			});
+			form.append('file', blob, binaryData.fileName ?? 'upload');
 		}
 
 		return this.helpers.httpRequestWithAuthentication.call(this, 'ozorApi', {
 			method: 'POST',
 			url: `${API_BASE}/v1/documents/analyze`,
 			body: form,
-			headers: form.getHeaders(),
 			json: true,
 		});
 	}

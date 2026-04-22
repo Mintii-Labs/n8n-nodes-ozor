@@ -1,3 +1,6 @@
 node_modules
 *.tgz
 PUBLIC_API_DOCS.md
+dist
+*.tsbuildinfo
+.DS_Store
