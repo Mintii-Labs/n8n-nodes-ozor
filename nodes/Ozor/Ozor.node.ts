@@ -882,7 +882,8 @@ async function runDocumentOperation(
 			);
 		}
 
-		const doneEvent = events.find((e) => e.step === 'done');
+		const doneEvents = events.filter((e) => e.step === 'done');
+		const doneEvent = doneEvents.find((e) => e.projectId) ?? doneEvents[doneEvents.length - 1];
 		if (!doneEvent) {
 			throw new ApplicationError(
 				'Ozor plan generation stream ended without a done event',
