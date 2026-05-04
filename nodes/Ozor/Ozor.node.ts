@@ -29,7 +29,7 @@ export class Ozor implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 'Ozor',
 		name: 'ozor',
-		icon: 'file:ozor.png',
+		icon: 'file:ozor.svg',
 		group: ['transform'],
 		version: 1,
 		subtitle: '={{$parameter["operation"] + ": " + $parameter["resource"]}}',

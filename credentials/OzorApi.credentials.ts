@@ -11,7 +11,7 @@ export class OzorApi implements ICredentialType {
 
 	displayName = 'Ozor API';
 
-	icon: Icon = 'file:../nodes/Ozor/ozor.png';
+	icon: Icon = 'file:../nodes/Ozor/ozor.svg';
 
 	documentationUrl = 'https://ozor.ai';
 
